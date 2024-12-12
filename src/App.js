@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import useUsers from "./useUsers";
 
 const App = () => {
   const [message, setMessage] = useState("");
@@ -6,6 +7,11 @@ const App = () => {
   const channelName = "test123";
   const [jun711Channel, setJun711Channel] = useState(null);
   const [tabId, setTabId] = useState(null);
+
+  // React Query ile veri çekme işlemi
+  const { data, isLoading, error } = useUsers(
+    message !== "Bu sekme kullanılamaz."
+  ); // enabled durumu burada kontrol ediliyor
 
   useEffect(() => {
     const channel = new BroadcastChannel(channelName);
@@ -22,9 +28,11 @@ const App = () => {
 
     channel.onmessage = (e) => {
       if (e.data.action === "checkTabs") {
-        e.data.tabId !== currentTabId
-          ? setMessage("Bu sekme kullanılamaz.")
-          : setIsPrimaryTab(true);
+        if (e.data.tabId !== currentTabId) {
+          setMessage("Bu sekme kullanılamaz.");
+        } else {
+          setIsPrimaryTab(true);
+        }
       }
 
       if (
@@ -45,7 +53,7 @@ const App = () => {
     return () => {
       channel.close();
     };
-  }, []);
+  }, [channelName, tabId]);
 
   const makeTabActive = () => {
     if (jun711Channel && tabId) {
@@ -56,19 +64,26 @@ const App = () => {
     }
   };
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
     <div style={styles.container}>
-      <h1>BroadcastChannel</h1>
-      <p>
-        lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet
-      </p>
-
-      {message === "Bu sekme kullanılamaz." && (
+      {message === "Bu sekme kullanılamaz." ? (
         <div style={styles.messageBox}>
           <p style={{ color: "white" }}>Bu sekme şu an kullanılamaz.</p>
           <button style={styles.button} onClick={makeTabActive}>
             Burada Kullanmaya Devam Et
           </button>
+        </div>
+      ) : (
+        <div>
+          <h1>Users</h1>
+          <ul>
+            {data.map((user) => (
+              <li key={user.id}>{user.name}</li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
