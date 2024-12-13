@@ -1,19 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-const fetchUsers = async () => {
+const fetchUsers = async (id) => {
   const { data } = await axios.get(
-    "https://jsonplaceholder.typicode.com/users"
+    `https://jsonplaceholder.typicode.com/posts/${id ? id : ""}`
   );
   return data;
 };
 
-const useUsers = (enabled) => {
+const useUsers = ({ enabled, id }) => {
+  console.log(id);
+
   return useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
-    refetchInterval: 2000, // 2 saniyede bir veri çekmeye devam et
-    enabled, // `enabled` parametresi sekme durumu ile kontrol edilir
+    queryKey: id ? ["users", id] : ["users"],
+    queryFn: () => fetchUsers(id),
+
+    enabled,
   });
 };
 

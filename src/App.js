@@ -7,13 +7,26 @@ const App = () => {
   const channelName = "test123";
   const [jun711Channel, setJun711Channel] = useState(null);
   const [tabId, setTabId] = useState(null);
+  const [randomUserId, setRandomUserId] = useState(null);
 
-  // React Query ile veri çekme işlemi
-  const { data, isLoading, error } = useUsers(
-    message !== "Bu sekme kullanılamaz."
-  ); // enabled durumu burada kontrol ediliyor
+  // useUsers hook'unu id ile çağırıyoruz
+  const { data, isLoading, error } = useUsers({
+    enabled: message !== "Bu sekme kullanılamaz.", // Bu sekme kullanılamazsa, veri çekme
+    id: randomUserId, // Rastgele kullanıcı id'si
+  });
 
   useEffect(() => {
+    const generateRandomUserId = () => {
+      const randomId = Math.floor(Math.random() * 100) + 1; // 1 ile 100 arasında rastgele bir sayı üret
+      setRandomUserId(randomId);
+    };
+
+    // 2 saniyede bir rastgele ID üret
+    const intervalId = setInterval(generateRandomUserId, 3000);
+
+    // Başlangıçta ilk id'yi üret
+    generateRandomUserId();
+
     const channel = new BroadcastChannel(channelName);
     setJun711Channel(channel);
 
@@ -50,7 +63,9 @@ const App = () => {
 
     updateTabStatus();
 
+    // Cleanup interval when component unmounts
     return () => {
+      clearInterval(intervalId); // Temizleme işlemi
       channel.close();
     };
   }, [channelName, tabId]);
@@ -64,8 +79,8 @@ const App = () => {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <div style={styles.container}>Loading...</div>;
+  if (error) return <div style={styles.container}>Error: {error.message}</div>;
 
   return (
     <div style={styles.container}>
@@ -78,12 +93,15 @@ const App = () => {
         </div>
       ) : (
         <div>
-          <h1>Users</h1>
-          <ul>
-            {data.map((user) => (
-              <li key={user.id}>{user.name}</li>
-            ))}
-          </ul>
+          <h1>POSTS</h1>
+          {data && (
+            <div style={{ maxWidth: 400 }}>
+              <h4>
+                {data.id} - {data.title}
+              </h4>
+              <p>{data.body}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
